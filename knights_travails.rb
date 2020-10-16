@@ -34,13 +34,17 @@ class Knight
   def initialize(location, destination)
     @board = Board.new
     @location = location
+    @root = Moves.new(location.first, location.last)
     @destination = destination
+    @last_move = nil
     draw_move(@location.first, @location.last)
     draw_destination
   end
 
   def draw_move(row, column)
+    @board.update(@last_move.first, @last_move.last, ("\u25A1".encode + ' ')) if @last_move
     @board.update(row, column, ("\u265E".encode + ' '))
+    @last_move = [row, column]
   end
 
   def draw_destination
@@ -57,16 +61,34 @@ class Knight
       x += 1 if y % 8 == 7
       y += 1
     end
-    moves.each { |move| draw_move(move.row, move.column) }
+    moves
+  end
+
+  def find_path(location = @location, moves_made = [@location])
+    possible_moves(location).each do |move|
+      move_array = move.to_a
+      moves_made.push(move_array) if move_array == @destination
+
+      #find_path(move_array, moves_made)
+    end
+    moves_made
+  end
+
+  def print_path(moves)
+    moves.each do |move|
+      draw_move(move.first, move.last)
+      puts @board
+      puts "\n"
+    end
   end
 end
 
 class Moves
-  attr_accessor :row, :column
+  attr_accessor :row, :column, :next_moves
   def initialize(row, column)
     @row = row
     @column = column
-    possible_moves = []
+    @next_moves = []
   end
 
   def legal(location)
@@ -78,12 +100,15 @@ class Moves
     col_diff = (location.last - @column).abs
     true if row_diff == 2 && col_diff == 1 || row_diff == 1 && col_diff == 2
   end
+
+  def to_a
+    [@row, @column]
+  end
 end
 
 def knight_moves(from, to)
 end
 
-knight = Knight.new([1, 5], [6, 2])
+knight = Knight.new([0, 0], [1, 2])
 #puts knight.board
-knight.possible_moves
-puts knight.board
+knight.print_path(knight.find_path)
