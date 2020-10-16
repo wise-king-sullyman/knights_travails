@@ -8,7 +8,7 @@ class Board
   def make_blank_board
     board = []
     8.times { board.push([]) }
-    board.each { |row| 8.times { row.push('# ') } }
+    board.each { |row| 8.times { row.push("\u25A1".encode + ' ') } }
     board
   end
 
@@ -35,36 +35,33 @@ class Knight
     @board = Board.new
     @location = location
     @destination = destination
-    move(@location.first, @location.last)
+    draw_move(@location.first, @location.last)
     draw_destination
   end
 
-  def move(row, column)
-    @board.update(row, column, 'X ')
+  def draw_move(row, column)
+    @board.update(row, column, ("\u265E".encode + ' '))
   end
 
   def draw_destination
-    @board.update(@destination.first, @destination.last, 'O ')
+    @board.update(@destination.first, @destination.last, ("\u2654".encode + ' '))
   end
 
   def possible_moves(location = @location)
     moves = []
-    x = -1
-    8.times do
-      x += 1
-      y = -1
-      8.times do
-        y += 1
-        pos_move = Moves.new(x, y)
-        moves.push(pos_move) if pos_move.legal(location)
-      end
+    x = 0
+    y = 0
+    while x < 8
+      pos_move = Moves.new(x, y % 8)
+      moves.push(pos_move) if pos_move.legal(location)
+      x += 1 if y % 8 == 7
+      y += 1
     end
-    moves.each { |pos_move| move(pos_move.row, pos_move.column)}
+    moves.each { |move| draw_move(move.row, move.column) }
   end
 end
 
 class Moves
-  include Comparable
   attr_accessor :row, :column
   def initialize(row, column)
     @row = row
