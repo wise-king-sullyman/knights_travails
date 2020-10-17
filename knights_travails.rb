@@ -51,53 +51,71 @@ class Knight
     @board.update(@destination.first, @destination.last, ("\u2654".encode + ' '))
   end
 
-  def possible_moves(location = @location)
-    moves = []
-    x = 0
-    y = 0
-    while x < 8
-      pos_move = Moves.new(x, y % 8)
-      moves.push(pos_move) if pos_move.legal(location)
-      x += 1 if y % 8 == 7
-      y += 1
+  def find_path(root = @root)
+    root.possible_moves
+    child_is_destination = check_children_for_destination(root)
+    return child_is_destination if child_is_destination
+    
+    root.next_moves.each do |move|
+      move.possible_moves
+      child_is_destination = check_children_for_destination(move)
+      return print_path(path_from_final_move(child_is_destination)) if child_is_destination
     end
-    moves
   end
 
-  def find_path(location = @location, moves_made = [@location])
-    possible_moves(location).each do |move|
-      move_array = move.to_a
-      moves_made.push(move_array) if move_array == @destination
-
-      #find_path(move_array, moves_made)
+  def check_children_for_destination(parent)
+    parent.next_moves.each do |move|
+      return move if move.to_a == @destination
     end
-    moves_made
+    false
+  end
+
+  def path_from_final_move(final_move)
+    path = []
+    move = final_move
+    while move
+      path.unshift(move.to_a)
+      move = move.parent
+    end
+    path
   end
 
   def print_path(moves)
     moves.each do |move|
       draw_move(move.first, move.last)
       puts @board
-      puts "\n"
+      puts "\n"  
     end
   end
 end
 
 class Moves
-  attr_accessor :row, :column, :next_moves
-  def initialize(row, column)
+  attr_accessor :row, :column, :next_moves, :parent
+  def initialize(row, column, parent = nil)
     @row = row
     @column = column
+    @parent = parent
     @next_moves = []
   end
 
-  def legal(location)
-    return false unless @row.between?(0, 7) && @column.between?(0, 7)
+  def possible_moves
+    x = 0
+    y = 0
+    while x < 8
+      @next_moves.push(Moves.new(x, y % 8, self)) if legal(x, y % 8)
+      x += 1 if y % 8 == 7
+      y += 1
+    end
+    @next_moves
+  end
 
-    return false if @row == location.first && @column == location.last
+  def legal(x, y)
+    return false unless x.between?(0, 7) && y.between?(0, 7)
+
+    return false if x == @row && y == @column
     
-    row_diff = (location.first - @row).abs
-    col_diff = (location.last - @column).abs
+    row_diff = (@row - x).abs
+    col_diff = (@column - y).abs
     true if row_diff == 2 && col_diff == 1 || row_diff == 1 && col_diff == 2
   end
 
@@ -109,6 +127,6 @@ end
 def knight_moves(from, to)
 end
 
-knight = Knight.new([0, 0], [1, 2])
+knight = Knight.new([0, 0], [3, 3])
 #puts knight.board
-knight.print_path(knight.find_path)
+knight.find_path
