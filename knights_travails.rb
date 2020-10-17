@@ -6,13 +6,6 @@ class Board
     @board = make_blank_board
   end
 
-  def make_blank_board
-    board = []
-    8.times { board.push([]) }
-    board.each { |row| 8.times { row.push(("\u25A1".encode + ' ')) } }
-    board
-  end
-
   def update(row, column, char)
     @board[row][column] = char
   end
@@ -27,6 +20,15 @@ class Board
     end
     s
   end
+
+  private
+
+  def make_blank_board
+    board = []
+    8.times { board.push([]) }
+    board.each { |row| 8.times { row.push(("\u25A1".encode + ' ')) } }
+    board
+  end
 end
 
 # Responsible for the creation, drawing, and path finding of the knight
@@ -40,16 +42,6 @@ class Knight
     draw_destination
   end
 
-  def draw_move(row, column)
-    @board.update(@last_move.first, @last_move.last, ("\u25A1".encode + ' ')) if @last_move
-    @board.update(row, column, ("\u265E".encode + ' '))
-    @last_move = [row, column]
-  end
-
-  def draw_destination
-    @board.update(@destination.first, @destination.last, ("\u2654".encode + ' '))
-  end
-
   def find_path
     destination_found = nil
     until destination_found
@@ -59,6 +51,18 @@ class Knight
     end
     final_move = level_order[destination_found]
     print_path(path_from_final_move(final_move))
+  end
+
+  private
+
+  def draw_move(row, column)
+    @board.update(@last_move.first, @last_move.last, ("\u25A1".encode + ' ')) if @last_move
+    @board.update(row, column, ("\u265E".encode + ' '))
+    @last_move = [row, column]
+  end
+
+  def draw_destination
+    @board.update(@destination.first, @destination.last, ("\u2654".encode + ' '))
   end
 
   def add_tree_layer
@@ -128,16 +132,18 @@ class Moves
     @next_moves
   end
 
+  def delete
+    parent.next_moves.delete(self)
+  end
+
+  private
+
   def legal(row, column)
     return false unless row.between?(0, 7) && column.between?(0, 7)
 
     row_diff = (@row - row).abs
     col_diff = (@column - column).abs
     true if row_diff == 2 && col_diff == 1 || row_diff == 1 && col_diff == 2
-  end
-
-  def delete
-    parent.next_moves.delete(self)
   end
 end
 
