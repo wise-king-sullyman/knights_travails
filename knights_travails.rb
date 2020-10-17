@@ -29,7 +29,7 @@ class Board
 end
 
 class Knight
-  attr_accessor :board
+  attr_accessor :board, :root
 
   def initialize(location, destination)
     @board = Board.new
@@ -51,23 +51,35 @@ class Knight
     @board.update(@destination.first, @destination.last, ("\u2654".encode + ' '))
   end
 
-  def find_path(root = @root)
-    root.possible_moves
-    child_is_destination = check_children_for_destination(root)
-    return child_is_destination if child_is_destination
-    
-    root.next_moves.each do |move|
-      move.possible_moves
-      child_is_destination = check_children_for_destination(move)
-      return print_path(path_from_final_move(child_is_destination)) if child_is_destination
+  def find_path
+    until level_order.index { |move| [move.row, move.column] == @destination }
+      add_tree_layer
+      prune_tree
+    end
+    final_move = level_order[level_order.index { |move| [move.row, move.column] == @destination }]
+    print_path(path_from_final_move(final_move))
+  end
+
+  def add_tree_layer
+    level_order.reverse.each do |node|
+      break unless node.next_moves.empty?
+
+      node.possible_moves
     end
   end
 
-  def check_children_for_destination(parent)
-    parent.next_moves.each do |move|
-      return move if move.to_a == @destination
+  def level_order(node = @root, moves = [], queue = [])
+    moves.push(node)
+    node.next_moves.each { |move| queue.push(move) }
+    level_order(queue.shift, moves, queue) unless queue.empty?
+    moves
+  end
+
+  def prune_tree
+    coverd_tiles = []
+    level_order.each do |move|
+      coverd_tiles.include?(move.tile) ? move.parent.next_moves.delete(move) : coverd_tiles.push(move.tile)
     end
-    false
   end
 
   def path_from_final_move(final_move)
@@ -90,10 +102,11 @@ class Knight
 end
 
 class Moves
-  attr_accessor :row, :column, :next_moves, :parent
+  attr_accessor :row, :column, :next_moves, :parent, :tile
   def initialize(row, column, parent = nil)
     @row = row
     @column = column
+    @tile = [row, column]
     @parent = parent
     @next_moves = []
   end
@@ -125,8 +138,8 @@ class Moves
 end
 
 def knight_moves(from, to)
+  knight = Knight.new(from, to)
+  knight.find_path
 end
 
-knight = Knight.new([0, 0], [3, 3])
-#puts knight.board
-knight.find_path
+knight_moves([3, 3], [4, 3])
