@@ -8,7 +8,7 @@ class Board
   def make_blank_board
     board = []
     8.times { board.push([]) }
-    board.each { |row| 8.times { row.push("\u25A1".encode + ' ') } }
+    board.each { |row| 8.times { row.push(("\u25A1".encode + ' ')) } }
     board
   end
 
@@ -29,15 +29,12 @@ class Board
 end
 
 class Knight
-  attr_accessor :board, :root
-
   def initialize(location, destination)
     @board = Board.new
-    @location = location
     @root = Moves.new(location.first, location.last)
     @destination = destination
     @last_move = nil
-    draw_move(@location.first, @location.last)
+    draw_move(location.first, location.last)
     draw_destination
   end
 
@@ -52,11 +49,13 @@ class Knight
   end
 
   def find_path
-    until level_order.index { |move| [move.row, move.column] == @destination }
+    destination_found = nil
+    until destination_found
       add_tree_layer
       prune_tree
+      destination_found = level_order.index { |move| move.tile == @destination }
     end
-    final_move = level_order[level_order.index { |move| [move.row, move.column] == @destination }]
+    final_move = level_order[destination_found]
     print_path(path_from_final_move(final_move))
   end
 
@@ -78,7 +77,11 @@ class Knight
   def prune_tree
     coverd_tiles = []
     level_order.each do |move|
-      coverd_tiles.include?(move.tile) ? move.parent.next_moves.delete(move) : coverd_tiles.push(move.tile)
+      if coverd_tiles.include?(move.tile)
+        move.parent.next_moves.delete(move)
+      else
+        coverd_tiles.push(move.tile)
+      end
     end
   end
 
@@ -96,7 +99,7 @@ class Knight
     moves.each do |move|
       draw_move(move.first, move.last)
       puts @board
-      puts "\n"  
+      puts "\n"
     end
   end
 end
