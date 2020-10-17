@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+# Responsible for creating, updating, and drawing the chess board
 class Board
   def initialize
     @board = make_blank_board
@@ -28,6 +29,7 @@ class Board
   end
 end
 
+# Responsible for the creation, drawing, and path finding of the knight
 class Knight
   def initialize(location, destination)
     @board = Board.new
@@ -75,12 +77,12 @@ class Knight
   end
 
   def prune_tree
-    coverd_tiles = []
+    covered_tiles = []
     level_order.each do |move|
-      if coverd_tiles.include?(move.tile)
-        move.parent.next_moves.delete(move)
+      if covered_tiles.include?(move.tile)
+        move.delete
       else
-        coverd_tiles.push(move.tile)
+        covered_tiles.push(move.tile)
       end
     end
   end
@@ -89,7 +91,7 @@ class Knight
     path = []
     move = final_move
     while move
-      path.unshift(move.to_a)
+      path.unshift(move.tile)
       move = move.parent
     end
     path
@@ -104,8 +106,9 @@ class Knight
   end
 end
 
+# Responsible for the creation, evaluation, and deletion of 'move' nodes
 class Moves
-  attr_accessor :row, :column, :next_moves, :parent, :tile
+  attr_accessor :next_moves, :parent, :tile
   def initialize(row, column, parent = nil)
     @row = row
     @column = column
@@ -115,28 +118,26 @@ class Moves
   end
 
   def possible_moves
-    x = 0
-    y = 0
-    while x < 8
-      @next_moves.push(Moves.new(x, y % 8, self)) if legal(x, y % 8)
-      x += 1 if y % 8 == 7
-      y += 1
+    row = 0
+    column = 0
+    while row < 8
+      @next_moves.push(Moves.new(row, column % 8, self)) if legal(row, column % 8)
+      row += 1 if column % 8 == 7
+      column += 1
     end
     @next_moves
   end
 
-  def legal(x, y)
-    return false unless x.between?(0, 7) && y.between?(0, 7)
+  def legal(row, column)
+    return false unless row.between?(0, 7) && column.between?(0, 7)
 
-    return false if x == @row && y == @column
-    
-    row_diff = (@row - x).abs
-    col_diff = (@column - y).abs
+    row_diff = (@row - row).abs
+    col_diff = (@column - column).abs
     true if row_diff == 2 && col_diff == 1 || row_diff == 1 && col_diff == 2
   end
 
-  def to_a
-    [@row, @column]
+  def delete
+    parent.next_moves.delete(self)
   end
 end
 
